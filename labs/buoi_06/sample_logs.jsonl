@@ -1,0 +1,8 @@
+{"ts":"2026-12-04T09:58:01.120Z","level":"INFO","event":"chat.start","request_id":"req-88a1","trace_id":"7f3c9a1b2d4e","user_id":"u-42","session_id":"s-9","question_length":38}
+{"ts":"2026-12-04T09:58:01.180Z","level":"INFO","event":"tool.start","request_id":"req-88a1","trace_id":"7f3c9a1b2d4e","message":"tool.lookup_order order=A1001"}
+{"ts":"2026-12-04T09:58:03.210Z","level":"ERROR","event":"tool.timeout","request_id":"req-88a1","trace_id":"7f3c9a1b2d4e","message":"order-service quá 2s, trả lỗi timeout"}
+{"ts":"2026-12-04T09:58:03.260Z","level":"ERROR","event":"chat.failed","request_id":"req-88a1","trace_id":"7f3c9a1b2d4e","message":"agent trả về lỗi cho người dùng"}
+{"ts":"2026-12-04T10:00:12.010Z","level":"INFO","event":"chat.start","request_id":"req-91b2","trace_id":"2a9d4c7e1f00","user_id":"u-77","session_id":"s-12","question_length":24}
+{"ts":"2026-12-04T10:00:12.640Z","level":"INFO","event":"chat.end","request_id":"req-91b2","trace_id":"2a9d4c7e1f00","message":"ok"}
+{"ts":"2026-12-04T10:01:44.300Z","level":"INFO","event":"chat.start","request_id":"req-93c4","trace_id":"9b1e2f3a4c5d","user_id":"u-42","session_id":"s-9","question_length":31}
+{"ts":"2026-12-04T10:01:45.002Z","level":"INFO","event":"chat.end","request_id":"req-93c4","trace_id":"9b1e2f3a4c5d","message":"ok"}

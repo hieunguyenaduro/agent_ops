@@ -1,0 +1,39 @@
+# Chạy từ thư mục gốc repo:
+#
+#   docker compose -f labs/buoi_03/docker-compose.yml up --build
+#
+# compose tự đọc .env ở thư mục gốc để lấy OPENAI_API_KEY, LANGFUSE_*.
+# Đường dẫn trong `build.context` và `env_file` được tính từ vị trí file
+# compose này, nên phải là ../.. chứ không phải ..
+
+name: support-agent-lab
+
+services:
+  agent:
+    build:
+      context: ../..
+      dockerfile: labs/buoi_03/Dockerfile
+    image: support-agent:0.3.0
+
+    # Bí mật đi vào container qua biến môi trường, không nằm trong image.
+    env_file:
+      - ../../.env
+    environment:
+      DB_PATH: /data/agent.db
+      APP_VERSION: 0.3.0
+
+    ports:
+      - "8000:8000"
+
+    # Dữ liệu sống ngoài container. Xoá container không mất lịch sử.
+    volumes:
+      - agent-data:/data
+
+    # Giữ container tự khởi động lại nếu crash (trừ khi ta chủ động stop).
+    restart: unless-stopped
+
+    # Cho uvicorn 15 giây để đóng các request đang chạy trước khi SIGKILL.
+    stop_grace_period: 15s
+
+volumes:
+  agent-data:

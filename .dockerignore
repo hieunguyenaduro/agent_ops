@@ -1,0 +1,22 @@
+# Không đưa bí mật và thứ không cần thiết vào build context.
+# Build context càng nhỏ, build càng nhanh; và không có nguy cơ .env
+# bị COPY nhầm vào image.
+.env
+.env.*
+!.env.example
+
+.venv/
+.git/
+.gitignore
+.DS_Store
+
+docs/
+data/
+baseline.json
+
+**/__pycache__/
+**/*.py[cod]
+.pytest_cache/
+
+labs/buoi_01/
+labs/buoi_02/

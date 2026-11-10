@@ -1,0 +1,57 @@
+# Manifest tham khảo cho Cloud Run (Knative Service).
+# Cách nhanh nhất là dùng labs/buoi_04/deploy.sh. File này dùng khi muốn
+# quản lý cấu hình bằng GitOps hoặc so sánh cấu hình giữa các môi trường.
+#
+# Thay PROJECT_ID bằng project thật trước khi `gcloud run services replace`.
+
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: support-agent
+  annotations:
+    run.googleapis.com/ingress: all
+spec:
+  template:
+    metadata:
+      annotations:
+        # 0 = không giữ instance nào khi rảnh (rẻ), đổi thành 1 nếu cần
+        # tránh cold start cho người dùng thật.
+        autoscaling.knative.dev/minScale: "0"
+        autoscaling.knative.dev/maxScale: "5"
+        run.googleapis.com/execution-environment: gen2
+    spec:
+      containerConcurrency: 20
+      timeoutSeconds: 300
+      serviceAccountName: agent-runtime@PROJECT_ID.iam.gserviceaccount.com
+      containers:
+        - name: agent
+          image: asia-southeast1-docker.pkg.dev/PROJECT_ID/agent-repo/support-agent:0.4.0
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          env:
+            - name: APP_VERSION
+              value: "0.4.0"
+            - name: OPENAI_MODEL
+              value: gpt-4.1-mini
+            - name: LANGFUSE_HOST
+              value: https://cloud.langfuse.com
+            # Bí mật lấy từ Secret Manager, không nằm trong manifest.
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openai-api-key
+                  key: latest
+            - name: LANGFUSE_PUBLIC_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: langfuse-public-key
+                  key: latest
+            - name: LANGFUSE_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: langfuse-secret-key
+                  key: latest

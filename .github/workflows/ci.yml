@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Quyền tối thiểu: chỉ đọc code.
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Lấy code
+        uses: actions/checkout@v4
+
+      - name: Cài Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Cài thư viện
+        run: pip install -r requirements.txt
+
+      - name: Biên dịch toàn bộ code
+        run: python -m compileall -q labs
+
+      - name: Chạy test
+        run: pytest -q
+        env:
+          # Test chạy offline: không gọi model, không gửi trace.
+          OPENAI_API_KEY: ""
+          LANGFUSE_PUBLIC_KEY: ""
+          LANGFUSE_SECRET_KEY: ""
+          LANGFUSE_TRACING_ENABLED: "false"
+          APP_VERSION: "0.5.0"
+
+      - name: Kiểm tra sẵn sàng deploy
+        run: python -m labs.buoi_04.preflight

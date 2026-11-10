@@ -1,0 +1,21 @@
+# Bí mật — không bao giờ commit
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Dữ liệu sinh ra khi chạy lab
+data/
+baseline.json
+
+# Hệ điều hành / IDE
+.DS_Store
+.idea/
+.vscode/

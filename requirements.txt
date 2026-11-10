@@ -1,0 +1,9 @@
+# Pin khoảng phiên bản để mọi máy cài ra gần giống nhau.
+# Buổi 1 giải thích vì sao không nên để trống hoàn toàn.
+langfuse>=5,<6
+openai>=1,<4
+fastapi>=0.115,<1
+uvicorn[standard]>=0.30,<1
+python-dotenv>=1,<2
+httpx>=0.27,<1
+pytest>=8,<9

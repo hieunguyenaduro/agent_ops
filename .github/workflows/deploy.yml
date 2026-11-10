@@ -1,0 +1,87 @@
+name: Deploy to Cloud Run
+
+# Chỉ deploy khi đẩy tag, ví dụ: git tag v0.5.0 && git push origin v0.5.0
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+  # Cần cho Workload Identity Federation (không dùng service account key).
+  id-token: write
+
+env:
+  PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  REGION: ${{ vars.GCP_REGION }}
+  SERVICE: support-agent
+  REPO: agent-repo
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: pytest -q
+        env:
+          OPENAI_API_KEY: ""
+          LANGFUSE_PUBLIC_KEY: ""
+          LANGFUSE_SECRET_KEY: ""
+          LANGFUSE_TRACING_ENABLED: "false"
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    # Environment có thể yêu cầu người duyệt trước khi chạy.
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Lấy số version từ tag
+        id: version
+        run: echo "value=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Đăng nhập GCP bằng OIDC
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Cài gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Build và push image
+        run: |
+          IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${SERVICE}:${{ steps.version.outputs.value }}"
+          gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+          docker build -f labs/buoi_03/Dockerfile -t "${IMAGE}" .
+          docker push "${IMAGE}"
+          echo "IMAGE=${IMAGE}" >> "$GITHUB_ENV"
+
+      - name: Deploy
+        run: |
+          gcloud run deploy "${SERVICE}" \
+            --image "${IMAGE}" \
+            --region "${REGION}" \
+            --platform managed \
+            --allow-unauthenticated \
+            --port 8080 \
+            --memory 512Mi \
+            --cpu 1 \
+            --concurrency 20 \
+            --min-instances 0 \
+            --max-instances 5 \
+            --timeout 300 \
+            --set-secrets "OPENAI_API_KEY=openai-api-key:latest,LANGFUSE_PUBLIC_KEY=langfuse-public-key:latest,LANGFUSE_SECRET_KEY=langfuse-secret-key:latest" \
+            --set-env-vars "APP_VERSION=${{ steps.version.outputs.value }},OPENAI_MODEL=gpt-4.1-mini"
+
+      - name: Smoke test sau deploy
+        run: |
+          URL="$(gcloud run services describe "${SERVICE}" --region "${REGION}" --format 'value(status.url)')"
+          echo "Service: ${URL}"
+          curl --fail --silent --show-error "${URL}/healthz"
